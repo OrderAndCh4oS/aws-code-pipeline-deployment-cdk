@@ -12,3 +12,10 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 * `cdk deploy`      deploy this stack to your default AWS account/region
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
+
+
+## Create GitHub Token AWS Secret
+
+```sh
+aws secretsmanager create-secret --name GitHubAccessToken --secret-string "ghp_xxxxxx"
+```
