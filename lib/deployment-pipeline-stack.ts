@@ -26,6 +26,12 @@ export class DeploymentPipelineStack extends Stack {
             ],
         });
 
+        // Create the IAM policy statement for ECR access
+        const ecrPolicyStatement = new PolicyStatement({
+            actions: ['ecr:GetAuthorizationToken'],
+            resources: ['*'], // You can specify specific ECR repositories if needed
+        });
+
         const buildProject = new PipelineProject(this, 'ApiBuildProject', {
             buildSpec: BuildSpec.fromObject({
                 version: '0.2',
@@ -60,8 +66,6 @@ export class DeploymentPipelineStack extends Stack {
                 buildImage: LinuxBuildImage.STANDARD_7_0, // Use a Docker-enabled CodeBuild environment
             },
         });
-
-
 
         const pipeline = new Pipeline(this, 'ApiPipeline', {
             pipelineName: 'ApiDeploymentPipeline',
@@ -108,9 +112,10 @@ export class DeploymentPipelineStack extends Stack {
             })
         );
 
-        // Attach the IAM policy to the pipeline role
-        const pipelineRole = pipeline.role as Role; // Cast the pipeline.role to Role
-        pipelineRole.addToPolicy(secretAccessPolicyStatement);
+        const buildProjectRole = buildProject.role as Role;
+        buildProjectRole.addToPolicy(ecrPolicyStatement);
 
+        const pipelineRole = pipeline.role as Role;
+        pipelineRole.addToPolicy(secretAccessPolicyStatement);
     }
 }
