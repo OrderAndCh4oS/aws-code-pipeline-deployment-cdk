@@ -63,7 +63,7 @@ export class DeploymentPipelineStack extends Stack {
                 },
             }),
             environment: {
-                buildImage: LinuxBuildImage.STANDARD_7_0, // Use a Docker-enabled CodeBuild environment
+                buildImage: LinuxBuildImage.STANDARD_5_0, // Use a Docker-enabled CodeBuild environment
             },
         });
 
