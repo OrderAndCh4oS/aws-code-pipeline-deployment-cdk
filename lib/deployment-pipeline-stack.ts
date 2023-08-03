@@ -29,11 +29,6 @@ export class DeploymentPipelineStack extends Stack {
         const buildProject = new PipelineProject(this, 'ApiBuildProject', {
             buildSpec: BuildSpec.fromObject({
                 version: '0.2',
-                env: {
-                    'variables': {
-                        'DOCKER_REPO': { value: '914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images' },
-                    }
-                },
                 phases: {
                     install: {
                         commands: [
@@ -51,8 +46,8 @@ export class DeploymentPipelineStack extends Stack {
                         commands: [
                             'npm run build', // Or any other command to build your CDK app
                             'npx cdk synth', // Generate the CloudFormation template
-                            'docker build -t $DOCKER_REPO ./src', // Build Docker image
-                            'docker push $DOCKER_REPO', // Push Docker image to ECR
+                            'docker build -t 914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images:latest ./src', // Build Docker image
+                            'docker push 914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images:latest', // Push Docker image to ECR
                         ],
                     },
                 },
@@ -96,12 +91,6 @@ export class DeploymentPipelineStack extends Stack {
                 project: buildProject,
                 input: githubSourceOutput, // Use the GitHubSourceOutput artifact as input
                 outputs: [new Artifact('BuildOutput')], // Define an artifact to store the build output
-                environmentVariables: { // Pass the ECR repository URI as an environment variable
-                    'ECR_REPOSITORY_URI': {
-                        type: BuildEnvironmentVariableType.PLAINTEXT,
-                        value: '914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images',
-                    },
-                },
             })
         );
 
