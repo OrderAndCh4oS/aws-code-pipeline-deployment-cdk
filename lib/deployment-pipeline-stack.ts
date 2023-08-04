@@ -1,6 +1,6 @@
 import {SecretValue, Stack, StackProps} from 'aws-cdk-lib';
 import {Construct} from "constructs";
-import {BuildEnvironmentVariableType, BuildSpec, LinuxBuildImage, PipelineProject} from "aws-cdk-lib/aws-codebuild";
+import {BuildSpec, LinuxBuildImage, PipelineProject} from "aws-cdk-lib/aws-codebuild";
 import {
     CloudFormationCreateUpdateStackAction,
     CodeBuildAction,
@@ -26,31 +26,15 @@ export class DeploymentPipelineStack extends Stack {
             ],
         });
 
-        // Create the IAM policy statement for ECR access
         const ecrPolicyStatement = new PolicyStatement({
             effect: Effect.ALLOW,
             actions: [
-                'ecr:GetAuthorizationToken',
-                'ecr:BatchCheckLayerAvailability',
-                'ecr:GetDownloadUrlForLayer',
-                'ecr:GetRepositoryPolicy',
-                'ecr:DescribeRepositories',
-                'ecr:ListImages',
-                'ecr:DescribeImages',
-                'ecr:BatchGetImage',
-                'ecr:GetLifecyclePolicy',
-                'ecr:GetLifecyclePolicyPreview',
-                'ecr:GetRepositoryPolicy',
-                'ecr:ListTagsForResource',
-                'ecr:PutLifecyclePolicy',
-                'ecr:SetRepositoryPolicy',
-                'ecr:UploadLayerPart',
-                'ecr:CompleteLayerUpload',
+                "ecr:*"
             ],
             resources: ['*'], // You can specify specific ECR repositories if needed
         });
 
-        const buildProject = new PipelineProject(this, 'ApiBuildProject', {
+        const buildProject = new PipelineProject(this, 'ApiDeploymentBuildProject', {
             buildSpec: BuildSpec.fromObject({
                 version: '0.2',
                 phases: {
@@ -60,13 +44,12 @@ export class DeploymentPipelineStack extends Stack {
                             'npm install',
                         ],
                     },
-                    pre_build: {
+                    prebuild: {
                         commands: [
                             'echo Logging in to Amazon ECR...',
-                            'AWS_ECR_LOGIN=$(aws ecr get-login-password --region eu-west-1)',
-                            'echo $AWS_ECR_LOGIN', // This will print the authentication token
-                            '$AWS_ECR_LOGIN | docker login --username AWS --password-stdin 914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images',
-                        ],
+                            'export AWS_ECR_LOGIN=$(aws ecr get-login-password --region eu-west-1)',
+                            'echo $AWS_ECR_LOGIN | docker login --username AWS --password-stdin 914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images',
+                        ]
                     },
                     build: {
                         commands: [
@@ -88,13 +71,13 @@ export class DeploymentPipelineStack extends Stack {
             },
         });
 
-        const pipeline = new Pipeline(this, 'ApiPipeline', {
+        const pipeline = new Pipeline(this, 'ApiDeploymentPipeline', {
             pipelineName: 'ApiDeploymentPipeline',
             crossAccountKeys: false,
         });
 
         // Add source stage (GitHub)
-        const sourceStage = pipeline.addStage({ stageName: 'Source' });
+        const sourceStage = pipeline.addStage({stageName: 'Source'});
         const githubSourceOutput = new Artifact('GitHubSourceOutput'); // Create the GitHubSourceOutput artifact
 
         sourceStage.addAction(
@@ -109,7 +92,7 @@ export class DeploymentPipelineStack extends Stack {
         );
 
         // Add build stage (CodeBuild)
-        const buildStage = pipeline.addStage({ stageName: 'Build' });
+        const buildStage = pipeline.addStage({stageName: 'Build'});
         buildStage.addAction(
             new CodeBuildAction({
                 actionName: 'CodeBuild',
@@ -120,7 +103,7 @@ export class DeploymentPipelineStack extends Stack {
         );
 
         // Add deploy stage (CDK)
-        const deployStage = pipeline.addStage({ stageName: 'Deploy' });
+        const deployStage = pipeline.addStage({stageName: 'Deploy'});
         deployStage.addAction(
             new CloudFormationCreateUpdateStackAction({
                 actionName: 'CFN_Deploy',
