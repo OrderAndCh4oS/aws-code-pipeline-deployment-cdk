@@ -28,7 +28,25 @@ export class DeploymentPipelineStack extends Stack {
 
         // Create the IAM policy statement for ECR access
         const ecrPolicyStatement = new PolicyStatement({
-            actions: ['ecr:GetAuthorizationToken'],
+            effect: Effect.ALLOW,
+            actions: [
+                'ecr:GetAuthorizationToken',
+                'ecr:BatchCheckLayerAvailability',
+                'ecr:GetDownloadUrlForLayer',
+                'ecr:GetRepositoryPolicy',
+                'ecr:DescribeRepositories',
+                'ecr:ListImages',
+                'ecr:DescribeImages',
+                'ecr:BatchGetImage',
+                'ecr:GetLifecyclePolicy',
+                'ecr:GetLifecyclePolicyPreview',
+                'ecr:GetRepositoryPolicy',
+                'ecr:ListTagsForResource',
+                'ecr:PutLifecyclePolicy',
+                'ecr:SetRepositoryPolicy',
+                'ecr:UploadLayerPart',
+                'ecr:CompleteLayerUpload',
+            ],
             resources: ['*'], // You can specify specific ECR repositories if needed
         });
 
@@ -63,7 +81,7 @@ export class DeploymentPipelineStack extends Stack {
                 },
             }),
             environment: {
-                buildImage: LinuxBuildImage.STANDARD_3_0, // Use a Docker-enabled CodeBuild environment
+                buildImage: LinuxBuildImage.STANDARD_7_0, // Use a Docker-enabled CodeBuild environment
                 privileged: true
             },
         });
