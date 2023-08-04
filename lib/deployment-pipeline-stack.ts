@@ -7,7 +7,7 @@ import {
     GitHubSourceAction
 } from "aws-cdk-lib/aws-codepipeline-actions";
 import {Artifact, Pipeline} from "aws-cdk-lib/aws-codepipeline";
-import {PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
+import {Effect, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 
 export class DeploymentPipelineStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
@@ -63,7 +63,9 @@ export class DeploymentPipelineStack extends Stack {
                     pre_build: {
                         commands: [
                             'echo Logging in to Amazon ECR...',
-                            'aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images',
+                            'AWS_ECR_LOGIN=$(aws ecr get-login-password --region eu-west-1)',
+                            'echo $AWS_ECR_LOGIN', // This will print the authentication token
+                            '$AWS_ECR_LOGIN | docker login --username AWS --password-stdin 914698808609.dkr.ecr.eu-west-1.amazonaws.com/api-pipeline-images',
                         ],
                     },
                     build: {
